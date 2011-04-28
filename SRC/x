@@ -1,0 +1,34 @@
+C>SEARCH /set excl on/ *.prg
+
+SEARCH  Ver 2.2
+Copyright (C) 1986, 1987, Solid Software, Inc. and Buzzwords International, Inc.
+
+Searching for "set excl on"
+ ... ignoring case.
+
+Found in line 150 of file CVTDB.PRG:
+         set excl on
+
+Found in line 290 of file CVTDB.PRG:
+            set excl on
+
+Found in line 2 of file FIXNTX.PRG:
+set excl on
+
+Found in line 21 of file RACDLP.PRG:
+   set excl on
+
+Found in line 192 of file RDBRP1.PRG:
+set excl on
+
+Found in line 199 of file RDBRP1.PRG:
+   set excl on
+
+Found in line 21 of file REINDEX.PRG:
+   set excl on
+
+Found in line 150 of file RSYSUM.PRG:
+         set excl on
+
+Found in line 290 of file RSYSUM.PRG:
+            set excl on

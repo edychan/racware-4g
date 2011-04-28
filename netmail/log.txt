@@ -1,0 +1,117 @@
+-------***[ NetMailBot 5.0.1 Build 4724  Started: 11/23/2009 10:27:27 ]***-------
+[10:27:27.823] NOTE: If using the SQL keyword 'LIKE' you must double the percentage signs to prevent DOS from stripping it from your command
+[10:27:27.917] Loading rezmsg.htm
+[10:27:27.917] Connecting to smtp.bizmail.yahoo.com
+[10:27:27.980]<--Server Response: 220 smtp104.biz.mail.mud.yahoo.com ESMTP
+[10:27:27.980]-->Server Request:  EHLO PVTERMSERVER
+
+[10:27:27.995]<--Server Response: 250-smtp104.biz.mail.mud.yahoo.com
+250-AUTH LOGIN PLAIN XYMCOOKIE
+250-PIPELINING
+250 8BITMIME
+[10:27:28.011]-->Server Request:  AUTH LOGIN
+
+[10:27:28.026]<--Server Response: 334 VXNlcm5hbWU6
+[10:27:28.042]-->Server Request:  ZWdlcmV6QGVvbnN1bS5jb20=
+
+[10:27:28.058]<--Server Response: 334 UGFzc3dvcmQ6
+[10:27:28.058]-->Server Request:  ZWdlNzMzNA==
+
+[10:27:28.105]<--Server Response: 235 OK, go ahead
+[10:27:28.105] Authentication succeeded
+[10:27:28.105] Preparing message
+[10:27:28.105]-->Server Request:  MAIL FROM:<reservations@pvrentals.com>
+
+[10:27:28.120]<--Server Response: 250 OK , completed
+[10:27:28.136]-->Server Request:  RCPT TO:<LCOX@AFEHOUSTON.COM>
+
+[10:27:28.151]<--Server Response: 250 OK , completed
+Adding TO(1): LCOX@AFEHOUSTON.COM
+[10:27:28.167]-->Server Request:  DATA
+
+[10:27:28.183]<--Server Response: 354 Start Mail. End with CRLF.CRLF
+[10:27:28.198]-->Server Request:  Message-Id: <200911231027281052@PVTERMSERVER>
+From: "" <reservations@pvrentals.com>
+To: "" <LCOX@AFEHOUSTON.COM>
+Cc: 
+Date: Mon, 23 Nov 2009 10:27:28 -0600
+Subject: PV Car & Truck Rentals Confirmation
+X-Mailer: ExclamationSoft Corporation Mail Version 3.0
+X-MSMail-Priority: NORMAL
+MIME-Version: 1.0
+Content-Type: text/html
+
+
+[10:27:28.198]-->Server Request:  <html>
+
+<body>
+
+<table align="center" width="80%" border="1" cellspacing="0" cellpadding="10">
+
+<tr>
+  <td><img src="http://pvrentals.com/images/pvrental.PNG" height="70" width="150"></td>
+</tr>
+
+<tr style='background:#EEEEEE;'><td>
+  This e-mail is a friendly reminder from your friends at: PV Car & Truck Rentals.</b>. 
+  <br>
+  <br>
+  We look forward to seeing you: A FARE EXTRAORDINAIRE.
+  <br>
+  <p style='margin-bottom:12.0pt; width: 800px;'><b><span>
+	Your confirmation number is : </span><span style='font-size:
+    15.0pt;color:#E61E14'>0060358916 </span></b></p>
+</td></tr>
+  
+<tr><td>
+  <p style='margin-bottom:11.0pt;'>Your reservation for a  
+        16ft Refrigerated Box Truck is confirmed for December 05, 2009 @ 08:00 am in Houston, Texas. 
+  <br>
+  <br>
+  Pickup Location: <b>5810 South Rice, Houston, TX 77081<br>Phone: 713-667-0665<br></b> 
+  <br>
+  Return Location:  <b>5810 South Rice, Houston, TX 77081<br>Phone: 713-667-0665<br></b> 
+  <br>
+  Pickup Date/Time: <b> December 05, 2009 @ 08:00 am </b> <br>
+  Return Date/Time: <b> December 06, 2009 @ 08:00 am </b> <br>
+  <br>
+  Vehicle Type:<b> 16ft Refrigerated Box Truck </b><br>
+  <br>
+  Your Rate is: <b> $100.00 per day. </b>
+  <br>
+  Stadium Tax:<b> $5.00 </b><br>
+  VIT Reimbursement:<b> $1.95 </b><br>
+  Rental Tax:<b> $10.20 </b><br>
+  Total Estimated Charges: <b> $117.15 </b><br>
+</td></tr>
+
+<tr style='background:#EEEEEE;'><td>
+  CANCELLATION POLICY-RESERVATIONS MUST BE CANCELLED UP TO 48 HOURS PRIOR TO 
+	PICKUP.<br>
+  <br>
+  Travel Restrictions: Driving is limited to Texas and bordering States.<br>
+  <br>
+  Thank You for Reserving your Vehicle with PV Car & Truck Rentals.
+  </p>
+</td></tr>
+
+
+</table>
+</body>
+</html>
+
+[10:27:28.198]-->Server Request:  
+.
+
+[10:27:28.276]<--Server Response: 250 OK , completed
+[10:27:28.276] Sending message
+[10:27:28.276] Sent to mail server
+[10:27:28.276] Disconnecting
+
+[10:27:28.276]-->Server Request:  QUIT
+
+[10:27:28.308]<--Server Response: 221 Service Closing transmission
+[10:27:28.308] Mail sent successfully to 1 recipients
+[10:27:28.355] Total operation time:  
+[10:27:28.355] 
+-------***[ NetMailBot Ended: 11/23/2009 10:27:28]***-------

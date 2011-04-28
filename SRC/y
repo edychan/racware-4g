@@ -1,0 +1,52 @@
+C>SEARCH /savescreen/ *.prg
+
+SEARCH  Ver 2.2
+Copyright (C) 1986, 1987, Solid Software, Inc. and Buzzwords International, Inc.
+
+Searching for "savescreen"
+ ... ignoring case.
+
+Found in line 250 of file ALTERROR.PRG:
+xscn = savescreen (22 + xnum, 00, 24, 79)
+
+Found in line 156 of file RACSU.PRG:
+yautoscn = savescreen (8, 59, 18, 75)
+
+Found in line 257 of file RACSU.PRG:
+      yscn = savescreen (yrow2 - 3, 26, yrow2 - 1, 60)
+
+Found in line 299 of file RACSU.PRG:
+      yscn = savescreen (yrow2 - 3, 26, yrow2 - 1, 60)
+
+Found in line 432 of file RACSU.PRG:
+         yscn = savescreen (yrow2 - 3, 26, yrow2 - 1, 56)
+
+Found in line 545 of file RACSU.PRG:
+   yscn = savescreen (yrow2 - 3, 26, yrow2 - 1, 55)
+
+Found in line 612 of file RACSU.PRG:
+yscn = savescreen (yrow2 - 6, 32, yrow2 - 1, 44)
+
+Found in line 340 of file RAFUNC.PRG:
+   gscrsav [xrow] = savescreen (24, xrow, 24, xrow)
+
+Found in line 398 of file RAFUNC.PRG:
+yscn = savescreen (24, 00, 24, 79)
+
+Found in line 463 of file RAFUNC.PRG:
+      gboxsav [n] = savescreen (yr1, yc1, yr2, yc2)
+
+Found in line 670 of file RAFUNC.PRG:
+yscn = savescreen (xr1, xc1 - 1, xr2 + 1, xc2)
+
+Found in line 1207 of file RAFUNC.PRG:
+   gscrsav [81] = savescreen (24, 00, 24, 79)
+
+Found in line 1244 of file RAFUNC.PRG:
+      gboxsav [n] = savescreen (yr1, yc1, yr2, yc2)
+
+Found in line 1406 of file RAFUNC.PRG:
+   yscn = savescreen (xrow + 1, xcol - 1, yrow + 1, xcol + ylen + 1)
+
+Found in line 1408 of file RAFUNC.PRG:
+   yscn = savescreen (xrow, xcol - 1, yrow + 1, xcol + ylen + 1)
