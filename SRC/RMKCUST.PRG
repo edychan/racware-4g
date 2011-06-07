@@ -4,8 +4,10 @@
 * 05.21.09: add CRM function
 *           add FCRM1, FCRM2 ... FCRM5 to racust.dbf
 *           FCRM ::= date,Id,purpose,note1,note2
+* --
+* 06.06.11: add filter option (by user id) to update customer records
 * ===========================================================
-private yarray[3], yptr, yret, ykey, yval  
+private yptr, yret, ykey, yval  
 
 do while .t.
    xret2 = f_pushmenu (xoption1)
@@ -43,30 +45,45 @@ do while .t.
       enddo
    case xret2 = 2
       f_use ("racust",2)
+	  set filter to             && reset filter if any   
       go top
       if .not. eof()
+         * -- 06.06.11: add filter option by user id
+         private yarray [4]		 
          yarray[1] = " Account Number "
          yarray[2] = " Last Name..... "
          yarray[3] = " First Name.... "
-         yret = f_pick_a (02, 05, "", "", yarray, 3, 1)
+		 yarray[4] = " User Id....... "
+         yret = f_pick_a (02, 05, "", "", yarray, 4, 1)
          if yret = 0
             loop
          endif
-         yval = space (15)
+         if yret = 1
+            f_use ("racust", 2)
+            yval = space (15)
+         elseif yret = 2
+            f_use ("racust", 1)
+            yval = space (14)
+         elseif yret = 3
+            f_use ("racust", 4)
+            yval = space (12)
+		 else
+            f_use ("racust" ,1)     && use last name order for user id
+            yval = space (3)
+         endif
          @ 02, 05 say yarray[yret] get yval
          read
          yval = upper (yval)
-         if yret = 1
-            f_use ("racust", 2)
-         elseif yret = 2
-            f_use ("racust", 1)
-         else
-            f_use ("racust", 4)
+         if yret < 4
+            set softseek on
+            set exact off
+            seek yval
+            set softseek off
+		 else
+		    set filter to FID1 = yval
+			go top
          endif
-         set softseek on
-         set exact off
-         seek yval
-         set softseek off
+         * --06.06.11		 
          if eof()
             tone (500, 9)
             f_popup ("No Matching Record. Press Any Key to Retry...",.t.)

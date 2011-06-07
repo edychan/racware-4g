@@ -1,9 +1,13 @@
+* -------------------------------------
+* 06.06.11: add new option 'ALL' to list summary for ALL locations
+* --------------------------------------
 f_clrscn ("Fleet Status Summary Table")
 
 yloc = gloc
 set key 28 to rivlfhlp
+* -- 06.06.11: add 'ALL'
 @ 2, 5 say "Enter Location.... " get yloc pict "!!!!!!!!!!" ;
-      valid f_valid ((yloc + ";") $ gusrloc)
+      valid f_valid ((yloc + ";") $ gusrloc .or. yloc = "ALL")
 if f_rd () = 27
    set key 28 to
    return
@@ -51,7 +55,14 @@ set index to (gstnpath + "ralfs")
 zap
 
 select ravm
-set filter to floc = yloc
+
+* --06.06.11: add "ALL"
+if yloc = "ALL"     
+else
+   set filter to floc = yloc
+endif
+* --
+
 go top
 store 0 to yanum, yonum, yhnum, yinum
 do while .not. eof ()

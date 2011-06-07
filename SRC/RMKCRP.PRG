@@ -6,7 +6,9 @@
 *
 * Revision:
 * 03/30/93: (edc) create customer info. into a/r
-* 
+* ---
+* 06.06.11: add filter option to update. 
+*           i.e. to filter by user id (FID1)
 * ===========================================================================
 do while .t.
    xret2 = f_pushmenu (xoption1)
@@ -40,29 +42,42 @@ do while .t.
       enddo
    case xret2 = 2
       f_use ("racrp")
+	  set filter to             && reset any filters
       if .not. eof()
-         declare yarray [2]
+         declare yarray [3]     && 06.06.11: add filter option by user id
          yarray[1] = " Account Number "
          yarray[2] = " Corporate Name "
-         yret = f_pick_a (02, 05, "", "", yarray, 2, 1)
+         yarray[3] = " User Id ...... "
+         yret = f_pick_a (02, 05, "", "", yarray, 3, 1)
          if yret = 0
             loop
          endif
          if yret = 1
             yval = space (15)
-         else
+         elseif yret = 2
             yval = space (25)
+		 else 
+            yval = space (3)		 
          endif
          @ 02, 05 say yarray[yret] get yval
          read
+         * --06.06.11: add filter option by user id
          yval = upper (yval)
-         set softseek on
-         set exact off
-         select racrp
-         set order to (yret)
-         seek yval
-         set softseek off
-         if eof()
+		 if yret < 3
+            set softseek on
+            set exact off
+            select racrp
+            set order to (yret)
+            seek yval
+            set softseek off
+		 else
+		    select racrp 
+			set order to 2    && by name order
+			set filter to FID1 = yval
+			go top
+         endif		 
+         * --06.06.11
+		 if eof()
             tone (500, 9)
             f_popup ("No Matching Record. Press Any Key to Retry...",.t.)
             select racrp
