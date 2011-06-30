@@ -11,6 +11,8 @@
 * edc: add calendar (F10)
 * 07.30.98
 * add f_y2k: convert date to year 2000 format
+* ---
+* add f_goodem: valid email address
 * ===========================================================================
 * function f_popup ::= popup system message on line 24.
 * parameters xmessage ::= system message
@@ -3230,3 +3232,66 @@ f_restbox (yscn)
 setcolor (ycolor)
 return (yflg)
 
+***************************
+* validate email:
+*   xemail: email addr
+*   xedit: if .t. => allow NA as valid 
+* 1. not empty
+* 2. /\A[\W+\-.]+@[a-Z\d\-.\.[a-Z]+\Z/
+* -------------------------------------
+function f_goodem
+parameter xemail, xedit
+private yok
+
+if pcount () = 1
+   xedit = .t.
+endif 
+   
+* special case:
+if xedit .and. upper(trim(xemail)) == "NA"     && not applicable 
+   return .t.
+endif   
+
+if empty(xemail)
+   return .f.
+endif
+
+* standard check
+yok = .t.
+do case
+case at ("@", xemail) = 0
+   yok = .f.
+case at (".", xemail) = 0
+   yok = .f.
+otherwise
+   * check valid domain
+   ystr = upper(substr(xemail,at("@",xemail)+1))    && xxx@xxx.domain
+   if at(".", ystr) = 0
+      yok = .f.
+   else
+      yok = .f.
+      if ".COM" $ ystr
+	     yok = .t.
+      elseif ".NET" $ ystr		 
+	     yok = .t.
+      elseif ".ORG" $ ystr		 
+	     yok = .t.
+      elseif ".GOV" $ ystr		 
+	     yok = .t.
+      elseif ".MIL" $ ystr		 
+	     yok = .t.
+      elseif ".EDU" $ ystr		 
+	     yok = .t.
+      elseif ".BIZ" $ ystr		 
+	     yok = .t.
+      elseif ".MOB" $ ystr		 
+	     yok = .t.
+      elseif ".PRO" $ ystr		 
+	     yok = .t.
+      elseif ".INT" $ ystr		 
+	     yok = .t.
+	  endif	  
+   endif	  
+endcase
+
+return yok

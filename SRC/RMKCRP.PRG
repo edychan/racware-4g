@@ -84,9 +84,9 @@ do while .t.
             use
             loop
          elseif (yret = 1 .and. found ()) .or. ;
-               f_pick_f (02, 3, "", "Corp. Number컴컴Company Name컴컴컴컴컴" + ;
-               "컴컴Contact컴컴컴컴컴컴컴Rate", "fcrpno+[ ]+fcompany+[ ]+" + ;
-               "fcontact+[ ]+frate")
+               f_pick_f (02, 3, "", "Corp. Number컴컴Company Name컴컴컴컴컴컴컴" + ;
+               "Last Checkout/Modified", "fcrpno+[ ]+fcompany+[   ]+" + ;
+               "dtoc(fckout)+space(4)+dtoc(fmoddt)")
             f_update ("racrp", "racrp", "", "rmkcrp1")
             use
          endif

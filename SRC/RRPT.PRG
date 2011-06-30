@@ -128,6 +128,145 @@ enddo
 release all like l_*
 close database
 
+******************************
+* help function for mgmt reports
+function mgmt_hdr
+
+parameters xdisp, xfeed
+private i, yln, ylen, ycol, ydesc
+if xdisp = "P"
+   if xfeed
+      eject
+   else
+      setprc (0, 0)
+      @ 00, 01 say l_cprt
+   endif
+elseif xfeed
+   @ yrow+1, 0 say ""
+   setprc (0, 0)   
+   @ 0, 0 say replicate ("Ä", l_formlen-1)
+else 
+   setprc (0,0)
+endif
+l_page = l_page + 1
+@ 01, 01 say 'DATE: ' + l_date
+@ 01, yc1 say gtitle
+@ 01, yc3 say 'PAGE: ' + str (l_page, 3)
+@ 02, 01 say 'TIME: ' + l_time
+@ 02, yc2 say l_ftitle
+@ 04, 01 say l_header
+yln = 6
+
+return (yln)
+
+**********************************
+function mgmt_end
+parameter xrow
+
+if ydisp = "P"
+   @ xrow + 1, 0 say l_nprt
+   eject
+endif
+
+set device to screen
+set printer to
+set console on
+set print off
+if ydisp = "D"
+   yfil=gstnpath+"rrout.rpt"
+   setcolor ("W/N")
+   clear
+   run racbrow &yfil
+   setcolor (gbluecolor)
+else
+   f_valid (.f., "Process completed")
+endif
+
+*********************************
+* return report destination for mgmt reports
+function mgmt_option
+private ypick
+
+gemrpt = .f.      && disable email option for now...
+* 06.21.11: add email report function
+if gemrpt
+   ypick = f_confirm ("[D]isplay on Screen  [P]rint  [F]ile  [E]mail  [Q]uit", "DPFEQ")    && add email
+else
+   ypick = f_confirm ("[D]isplay on Screen  [P]rint  [F]ile  [Q]uit", "DPFQ")    
+endif
+return ypick
+
+***********************************
+* return filename 
+* pass by reference
+function mgmt_getfil
+parameter xfile
+private yfile
+yfile = space(40)
+do while .t.
+   @ 07, 00
+   @ 07, 05 say "File Name: " get yfile 
+   if f_rd() = 27
+      return .f.
+   else
+      ykeyin = f_confirm ("Is this correct [Y/N/Q] ", "YNQ")
+      if ykeyin = "Y"
+         @ 07, 00
+         exit
+      elseif ykeyin = "Q"
+         return .f.
+      endif
+   endif
+enddo
+xfile = yfile
+return .t.
+
+****************************************
+* return email
+* pass by reference
+function mgmt_getem
+parameter xemail, xfile
+private yemail, yfile
+yemail = f_truncate(gemail,40)
+* -- add email function: 06.21.11
+do while .t.
+   @ 07, 00
+   @ 07, 05 say "email: " get yemail pict replicate ("x", 40) valid ;
+     f_valid (f_goodem (yemail, .f.), "Invalid email address ...")     && cannot enter NA as valid email 
+   if f_rd() = 27
+      return .f.
+   else
+      ykeyin = f_confirm ("Is this correct [Y/N/Q] ", "YNQ")
+      if ykeyin = "Y"
+         @ 07, 00
+         yfile = gempath + "rr"+strtran(time(),":","")+".txt"
+         exit
+      elseif ykeyin = "Q"
+         return .f.
+      endif
+   endif
+enddo
+xemail = yemail
+xfile = yfile
+return .t.
+
+*********************************
+* set file destination
+function mgmt_dest 
+parameter xoption, xfile
+
+f_popup ("Creating Report ...")
+if xoption $ "DEF"        && 06.21.11: add Email
+   set device to print
+   set printer to &xfile
+else
+   * set device to print
+   set console off
+   set print on
+   set device to print
+   set printer to lpt1
+endif
+
 **********************************
 procedure mgmt_1
 private y1, y2, yt, yrow, ycol, ystr, ydisp
@@ -381,59 +520,6 @@ use
 select mgmt_1t
 use
 
-******************************
-function mgmt_hdr
-
-parameters xdisp, xfeed
-private i, yln, ylen, ycol, ydesc
-if xdisp = "P"
-   if xfeed
-      eject
-   else
-      setprc (0, 0)
-      @ 00, 01 say l_cprt
-   endif
-elseif xfeed
-   @ yrow+1, 0 say ""
-   setprc (0, 0)   
-   @ 0, 0 say replicate ("Ä", l_formlen-1)
-else 
-   setprc (0,0)
-endif
-l_page = l_page + 1
-@ 01, 01 say 'DATE: ' + l_date
-@ 01, yc1 say gtitle
-@ 01, yc3 say 'PAGE: ' + str (l_page, 3)
-@ 02, 01 say 'TIME: ' + l_time
-@ 02, yc2 say l_ftitle
-@ 04, 01 say l_header
-yln = 6
-
-return (yln)
-
-**********************************
-function mgmt_end
-parameter xrow
-
-if ydisp = "P"
-   @ xrow + 1, 0 say l_nprt
-   eject
-endif
-
-set device to screen
-set printer to
-set console on
-set print off
-if ydisp = "D"
-   yfil=gstnpath+"rrout.rpt"
-   setcolor ("W/N")
-   clear
-   run racbrow &yfil
-   setcolor (gbluecolor)
-else
-   f_valid (.f., "Process completed")
-endif
-
 *************************************
 procedure mgmt_2
 private ydate, ymo, yyr, ystart, yend, ydays, ystatus, yln, ylcnt, ydisp
@@ -675,26 +761,45 @@ select mgmt_2
 use
 
 **********************************
+* 06.29.11
+* -- add file as a option
+* -- add Detail/Summary
+* -- stop use ravm->fclass, instead use raagrh->fclass
 procedure mgmt_3
 private ystart, yend, yclass, yfnd, ystatus, yln, ylcnt, ydisp, ylogic
 
 f_box (02, 05, 04, 78, "You have selected")
 @ 03, 07 say "Vehicle Revenue Report"
+
+* -- 06.22.11
+l_filename = space(50)
+yemail = space(40)
+yrptname = "Vehicle Utilization Report"
+ydisp = mgmt_option()
+if ydisp ="Q"
+   return
+elseif ydisp = "F"
+   if .not. mgmt_getfil (@l_filename)     && pass by reference
+      return
+   endif  
+elseif ydisp = "E"
+   if .not. mgmt_getem (@yemail, @l_filename)     && pass by reference
+      return
+   endif	  
+endif
+* --
 yclass = space (4)
 ystart = date()
 yend = date()
+ydetail = .t.
 
 @ 07, 3 say "Class....." get yclass pict "!!!!"
 @ 08, 3 say "From......" get ystart pict "@D" valid f_y2k (@ystart)
 @ 09, 3 say "To........" get yend pict "@D" valid ;
   f_valid (f_y2k (@yend) .and.  yend >= ystart)
+@ 10, 3 say "Detail...." get ydetail pict "Y"
 if f_rd () = 27
   return
-endif
-
-ydisp = f_confirm ("[D]isplay on Screen  [P]rint [Q]uit", "DPQ")
-if ydisp ="Q"
-   return
 endif
 
 f_popup ("Please Wait...")
@@ -719,22 +824,22 @@ if .not. file (gstnpath + "mgmt_3.dbf")
    append blank
    replace field_name with "FPRICE"
    replace field_type with "N"
-   replace field_len with 8
+   replace field_len with 10
    replace field_dec with 2
    append blank
    replace field_name with "FTNM"
    replace field_type with "N"
-   replace field_len with 8
+   replace field_len with 10
    replace field_dec with 2
    append blank
    replace field_name with "FCDW"
    replace field_type with "N"
-   replace field_len with 8
+   replace field_len with 10
    replace field_dec with 2
    append blank
    replace field_name with "FDAYS"
    replace field_type with "N"
-   replace field_len with 4
+   replace field_len with 6
    replace field_dec with 0
    use
    create (gstnpath + "mgmt_3") from (gstnpath + "stru")
@@ -744,6 +849,7 @@ use (gstnpath + "mgmt_3") exclusive alias mgmt_3
 zap
 index on funit+fclass to (gstnpath + "mgmt_3")
 
+* -- 06.29.11: stop look in vm for the car class, otherwise sold vehicles cannot be accounted for ...
 f_use ("ravm")
 f_use ("raagrh",4)
 set relation to funit into ravm
@@ -755,10 +861,11 @@ do while fdatein <= yend .and. .not. eof ()
    select mgmt_3
    seek raagrh->funit
    if eof()
-      if ravm->fclass = yclass
+      * if ravm->fclass = yclass
+      if raagrh->fclass = yclass
          select mgmt_3 
          append blank
-         replace funit with raagrh->funit, fclass with ravm->fclass
+         replace funit with raagrh->funit, fclass with raagrh->fclass    && instead of ravm->fclass
          replace fmodel with ravm->fyear+[ ]+ravm->fmodel, fprice with ravm->fpuramt
          replace ftnm with raagrh->ftmetot+raagrh->fmlgtot, fcdw with raagrh->fcdwtot
          ydays = raagrh->fdatein-raagrh->fdateout
@@ -799,17 +906,14 @@ yc1 = max (20, int (l_formlen/2) - int (len (gtitle) / 2))
 yc2 = max (20, int (l_formlen/2) - int (len (l_ftitle) / 2))
 yc3 = l_formlen - 12
 
-f_popup ("Creating Report ...")
-if ydisp = "D"
-   yfil=gstnpath+"rrout.rpt"
-   set device to print
-   set printer to &yfil
-else
-   set device to print
-endif
-
+* -- 06.22.11: Create report here
+l_filename = if(empty(l_filename), gstnpath + "rrout.rpt", l_filename)
+mgmt_dest (ydisp, l_filename)     && set print dest
+* --
 yrow = mgmt_hdr (ydisp, .f.)
 
+if ydetail       && output details
+* --
 select mgmt_3
 go top
 do while .not. eof ()
@@ -821,7 +925,8 @@ do while .not. eof ()
    yrow = yrow + 1
    skip
 enddo
-
+* --
+endif
 * output summary
 yrow = yrow + 2
 ystr = space(34)+str(sumtnm,8,2)+[ ]+str(sumcdw,8,2)+  ;

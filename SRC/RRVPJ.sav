@@ -16,6 +16,11 @@
 * 07.09.99: preset car group in rasys.dbf (FREMARK1)
 * ---------------------------------------------------------------------------
 * 01.28.09: use raagr->freferal for [REWRITE] calculation
+* ---
+* 06.06.11: eliminate am/pm
+*           eliminate walkin
+*           add 4 preset vehicle selection list
+*           sort by same order in the selection list  
 * ===========================================================================
 f_clrscn ("Reservation Projection Report")
 setcolor (gsubcolor)
@@ -31,19 +36,20 @@ private yvdate [10], yvchg [10], yvclas [10]
 afill (yvdate, ctod (space (8)))
 afill (yvchg, 0)
 afill (yvclas, space (4))
-private ycargp [10], yflag
+private ycargp [10], ygrpno
 afill (ycargp, space(34))
-yflag = .f.
+ygrpno = 0        && preset car group #
+yflag = .f.       && car group boolean
 * preload ycargp
-private yfil, yfld
-yfil = gmempath + "racargp.mem"
-if file (yfil)
-   restore from &yfil additive
-   for i = 1 to 10
-      yfld = "l_cargp" + strtran(str(i,2), " ", "")
-      ycargp [i] = &yfld
-   next
-endif
+*private yfil, yfld
+*yfil = gmempath + "racargp.mem"
+*if file (yfil)
+*   restore from &yfil additive
+*   for i = 1 to 10
+*      yfld = "l_cargp" + strtran(str(i,2), " ", "")
+*      ycargp [i] = &yfld
+*   next
+*endif
 use
 
 set century on
@@ -52,8 +58,8 @@ set century on
 @ 05, 07 say "[S]ummary/[D]etail.........."
 @ 06, 07 say "Accrual [Y/N]..............."
 @ 07, 07 say "No Show %...................      %"
-@ 08, 07 say "WalkIn %....................      %"
-@ 09, 07 say "Car Group..................."
+* @ 08, 07 say "WalkIn %....................      %"      && 06.06.11
+@ 09, 07 say "Car Group [0/1/2/3/4]......."
 @ 11, 07 say "Date     Class  Fleet Variant  Date     Class  Fleet Variant"
 do while .t.
    @ 03, 36 get yloc picture "!!!!!!!!!!" ;
@@ -63,12 +69,12 @@ do while .t.
    @ 05, 36 get yrpt pict "!" valid f_valid (yrpt $ "DS")
    @ 06, 36 get yaccrual pict "!" valid f_valid (yaccrual $ "YN")
    @ 07, 36 get yresvper pict "99.99"
-   @ 08, 36 get ywkinmult pict "99.99"
+   * @ 08, 36 get ywkinmult pict "99.99"     && 06.06.11
    * for i = 1 to 5
    *   @ i + 8, 18 say str(i,1)+"..............."
    *   @ i + 8, 36 get ycargp[i] pict "!!!!-!!!!-!!!!-!!!!-!!!!-!!!!-!!!!"
    *next 
-   @ 09, 36 get yflag picture [Y] valid rrvpj2 ()
+   @ 09, 36 get ygrpno picture [9] valid f_valid (rrvpj2 (), "Invalid Car Group!")
    for i = 1 to 5
       @ i + 11, 07 get yvdate [i*2-1]
       @ i + 11, 19 get yvclas [i*2-1] pict "!!!!"
@@ -89,7 +95,7 @@ do while .t.
    endif
 enddo
 
-ywkinmult = ywkinmult / (100.00 - ywkinmult)
+* ywkinmult = ywkinmult / (100.00 - ywkinmult)
 f_popup ("Please Wait...", .f.)
 if ydisp = "F"
    yfil = gstnpath + "res_proj.rpt"
@@ -182,7 +188,10 @@ else
    enddo
 endif
 
+* --yclass is the array which control the order of the classes (column) of this projection report --
 select ravehs
+set index to        && --06.06.11: use default list order 
+
 private yclass [reccount ()]
 go top
 ynum = 0
@@ -195,6 +204,8 @@ do while .not. eof ()
    skip
 enddo
 
+select ravehs      && --06.06.11: need to use the index to build the projection report...
+set index to (gstnpath + "ravehs") 
 f_popup ("Creating Projection Report Database", .f.)
 
 select 0
@@ -258,10 +269,12 @@ for n = 0 to (ydate2 - date ())
          replace fnet with 0
       endif
       commit
-      append blank
-      replace fdate with date () + n, fhr with "P", fclass with ravehs->fclass
-      replace fnet with 0, fres with 0, fdue with 0, fwkin with 0
-      commit
+      * --06.06.11: eliminate am/pm
+      * append blank
+      * replace fdate with date () + n, fhr with "P", fclass with ravehs->fclass
+      * replace fnet with 0, fres with 0, fdue with 0, fwkin with 0
+      * commit
+	  * --
       select ravehs
       skip
    enddo
@@ -290,11 +303,12 @@ do while fresvstat = "O" .and. .not. eof ()
    x = x + 1
    @ 4, 5 say "Scanning " + ltrim (str (x)) + " reservations"
    if &ycond1
-      if ftimeout < "12:00"
-         l_fhr = "A"
-      else
-         l_fhr = "P"
-      endif
+      *if ftimeout < "12:00"
+      *   l_fhr = "A"
+      *else
+      *   l_fhr = "P"
+      *endif
+	  l_fhr = "A"
       select raproj
       ykey = rrvpj1 (rares->fclass)
       seek ykey + dtos (rares->fdateout) + l_fhr
@@ -303,11 +317,12 @@ do while fresvstat = "O" .and. .not. eof ()
       select rares
    endif
    if &ycond3
-      if ftimein < "12:00"    && 08/10/95: ftimein instead of ftimeout
-         l_fhr = "A"
-      else
-         l_fhr = "P"
-      endif
+      *if ftimein < "12:00"    && 08/10/95: ftimein instead of ftimeout
+      *   l_fhr = "A"
+      *else
+      *   l_fhr = "P"
+      *endif
+	  l_fhr = "A"
       select raproj
       ykey = rrvpj1 (rares->fclass)
       seek ykey + dtos (rares->fdatein) + l_fhr
@@ -341,11 +356,12 @@ do while .not. eof ()
    x = x + 1
    @ 6, 5 say "Scanning " + ltrim (str (x)) + " Open Contracts"
    if &ycond2
-      if ftimein < "12:00"
-         l_fhr = "A"
-      else
-         l_fhr = "P"
-      endif
+      *if ftimein < "12:00"
+      *   l_fhr = "A"
+      *else
+      *   l_fhr = "P"
+      *endif
+	  l_fhr = "A"
       select raproj
       ykey = rrvpj1 (raagr->fuclass)
       seek ykey + dtos (raagr->fdatein) + l_fhr
@@ -365,7 +381,7 @@ do while .not. eof ()
    if fclass <> yprevclass
       yprevclass = fclass
    else
-      replace fwkin with round (fres * ywkinmult, 0)
+      * replace fwkin with round (fres * ywkinmult, 0)
       replace fnet with fnet + ynextnet
       replace fres with round (fres * (100.00 - yresvper) / 100.00, 0)
    endif
@@ -395,7 +411,9 @@ else
 endif
 setprc (0,0)
 for n = 0 to (ydate2 - ydate1)
-   for n1 = 1 to 2
+   * --06.06.11: eliminate am/pm
+   * for n1 = 1 to 2     
+   for n1 = 1 to 1
       if ynum <= 20 .or. ydisp $ "D;F"
          if yline > 52
             if ydisp = "P"
@@ -429,7 +447,8 @@ for n = 0 to (ydate2 - ydate1)
          endif
 
          yline = yline + 1
-         @ yline, 0 say dtoc (ydate1 + n) + if (n1 = 1, " am", " pm") + " Avail"
+         * --06.06.11: @ yline, 0 say dtoc (ydate1 + n) + if (n1 = 1, " am", " pm") + " Avail"
+         @ yline, 0 say dtoc (ydate1 + n) + if (n1 = 1, "   ", "   ") + " Avail"
          ylinetot = 0
          for n2 = 1 to ynum
             seek yclass [n2] + dtos (ydate1 + n) + if (n1 = 1, "A", "P")
@@ -448,15 +467,16 @@ for n = 0 to (ydate2 - ydate1)
             next
             @ yline, 18 + ynum * 5 say str (ylinetot, 5)
 
-            yline = yline + 1
-            @ yline, 12 say "Wk In"
-            ylinetot = 0
-            for n2 = 1 to ynum
-               seek yclass [n2] + dtos (ydate1 + n) + if (n1 = 1, "A", "P")
-               ylinetot = ylinetot + fwkin
-               @ yline, 18 + (n2 - 1) * 5 say str (fwkin, 4)
-            next
-            @ yline, 18 + ynum * 5 say str (ylinetot, 5)
+            * 06.06.11: eliminate walkin 
+			*yline = yline + 1
+            *@ yline, 12 say "Wk In"
+            *ylinetot = 0
+            *for n2 = 1 to ynum
+            *   seek yclass [n2] + dtos (ydate1 + n) + if (n1 = 1, "A", "P")
+            *   ylinetot = ylinetot + fwkin
+            *   @ yline, 18 + (n2 - 1) * 5 say str (fwkin, 4)
+            *next
+            *@ yline, 18 + ynum * 5 say str (ylinetot, 5)
 
             yline = yline + 1
             @ yline, 12 say "Due"
@@ -512,7 +532,8 @@ for n = 0 to (ydate2 - ydate1)
             endif
             yline = yline + 1
             if ycnt1 = 1
-               @ yline, 0 say dtoc (ydate1 + n) + if (n1 = 1, " am", " pm") + " Avail"
+               * --06.06.11: @ yline, 0 say dtoc (ydate1 + n) + if (n1 = 1, " am", " pm") + " Avail"
+               @ yline, 0 say dtoc (ydate1 + n) + if (n1 = 1, "   ", "   ") + " Avail"
             else
                @ yline, 12 say "Avail"
             endif
@@ -535,16 +556,18 @@ for n = 0 to (ydate2 - ydate1)
                if ycnt2 = ynum
                   @ yline, 18 + (ycnt2 - ycnt1 + 1) * 5 say str (ylinetot2, 5)
                endif
-               yline = yline + 1
-               @ yline, 12 say "Wk In"
-               for n2 = ycnt1 to ycnt2
-                  seek yclass [n2] + dtos (ydate1 + n) + if (n1 = 1, "A", "P")
-                  ylinetot3 = ylinetot3 + fwkin
-                  @ yline, 18 + (n2 - ycnt1) * 5 say str (fwkin, 4)
-               next
-               if ycnt2 = ynum
-                  @ yline, 18 + (ycnt2 - ycnt1 + 1) * 5 say str (ylinetot3, 5)
-               endif
+               * --06.06.11: eliminate walkin
+			   *yline = yline + 1
+               *@ yline, 12 say "Wk In"
+               *for n2 = ycnt1 to ycnt2
+               *   seek yclass [n2] + dtos (ydate1 + n) + if (n1 = 1, "A", "P")
+               *   ylinetot3 = ylinetot3 + fwkin
+               *   @ yline, 18 + (n2 - ycnt1) * 5 say str (fwkin, 4)
+               *next
+               *if ycnt2 = ynum
+               *   @ yline, 18 + (ycnt2 - ycnt1 + 1) * 5 say str (ylinetot3, 5)
+               *endif
+			   * --06.06.11 
                yline = yline + 1
                @ yline, 12 say "Due"
                for n2 = ycnt1 to ycnt2
@@ -602,10 +625,32 @@ select (ysel)
 return xkey
 
 *******************************
+* ygrpno = 0 => do not use car group
+*         1 => racargp1.mem
+*         2 => racargp2.mem
+*         3 => racargp3.mem
+*         4 => racargp4.mem
 function rrvpj2
 
-if yflag
+if ygrpno = 0
+   return .t.
+elseif ygrpno < 0 .or. ygrpno > 4
+   return .f.
+endif
 
+* preload ycargp
+private yfil, yfld
+yfil = gmempath + "racargp"+str(ygrpno,1)+".mem"
+if file (yfil)
+   restore from &yfil additive
+   for i = 1 to 10
+      yfld = "l_cargp" + strtran(str(i,2), " ", "")
+      ycargp [i] = &yfld
+   next
+else
+   return .f.   
+endif
+   
 private yscn, ycolor, yptr, yyr, yfld
 ycolor = setcolor (gsubcolor)
 yscn = f_box (10, 10, 21, 51)
@@ -671,8 +716,8 @@ do while .t.
       exit
    endif
 enddo
+
 * save ycargp
-yfil = gmempath + "racargp"
 for i = 1 to 10
    yfld = "l_cargp" + strtran (str(i,2), " ", "")
    &yfld = ycargp [i]
@@ -681,5 +726,5 @@ save to &yfil all like l_cargp*
 *
 f_restbox (yscn)
 setcolor (ycolor)
-endif
+
 return .t.

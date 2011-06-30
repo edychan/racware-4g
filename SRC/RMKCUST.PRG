@@ -91,8 +91,8 @@ do while .t.
             loop
          endif
          if (found () .and. yret = 1) .or. ;
-               f_pick_f (02, 3, "", "Customer No.컴컴Last Name컴컴컴First " + ;
-               "Name컴훀ate", "fcustno+[ ]+flname+[ ]+ffname+[ ]+frate")
+               f_pick_f (02, 3, "", "Customer No.컴컴First Name컴컴횸ast " + ;
+               "Name컴컴Last Checkout/Modified", "fcustno+[ ]+ffname+space(3)+flname+[ ]+dtoc(fckout)+space(4)+dtoc(fmoddt)")
             f_update ("racust", "racust", "", "rmkcust1")
             close databases
          endif
