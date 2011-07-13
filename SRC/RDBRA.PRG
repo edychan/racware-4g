@@ -17,6 +17,8 @@
 * edc: proc error using help function for misc charges
 * date: 10/20/94
 * edc: make sure dbrt record is balanced before user can exit
+* --
+* 07.12.11: add encryption for cc# in racred.dbf
 * ===========================================================================
 private yret, yscn, ychg
 declare ytyp [3], yamt [3], yccrec [3], ycccap [3]
@@ -139,7 +141,7 @@ do while .t.
                      yamt [n] = fauthamt
                   yccrec [n] = recno ()
                   ycccap [n] = (frectype = __gcccap)
-                  yccnum [n] = fccnum
+                  yccnum [n] = f_decode(fccnum)
                   yccexp [n] = fccexp
                   yauthonly [n] = fauthonly
                   yfnd = .t.
@@ -320,7 +322,7 @@ do while .t.
                   yamt [n] = fauthamt
                yccrec [n] = recno ()
                ycccap [n] = (frectype = __gcccap)
-               yccnum [n] = fccnum
+               yccnum [n] = f_decode(fccnum)
                yccexp [n] = fccexp
                yauthonly [n] = fauthonly
                yfnd = .t.
@@ -636,7 +638,7 @@ if l_fpaytyp1 <> ytyp [1] .or. .not. iszero (l_famt1 - yamt [1])
          f_fupdate ("C")
          reclock ()
       endif
-      replace fccnum with yccnum [1], fcctype with l_fpaytyp1
+      replace fccnum with f_encode(yccnum [1]), fcctype with l_fpaytyp1
       replace fccexp with yccexp [1], frectype with yrectype [1]
       replace ftranstyp with if (l_famt1 < 0.00, "C", "S")
       replace fauthonly with yauthonly [1], fauthamt with abs (l_famt1)
@@ -679,7 +681,7 @@ if l_fpaytyp2 <> ytyp [2] .or. .not. iszero (l_famt2 - yamt [2])
          f_fupdate ("C")
          reclock ()
       endif
-      replace fccnum with yccnum [2], fcctype with l_fpaytyp2
+      replace fccnum with f_encode(yccnum [2]), fcctype with l_fpaytyp2
       replace fccexp with yccexp [2], frectype with yrectype [2]
       replace ftranstyp with if (l_famt2 < 0.00, "C", "S")
       replace fauthonly with yauthonly [2], fauthamt with abs (l_famt2)
@@ -722,7 +724,7 @@ if l_fpaytyp1 <> ytyp [3] .or. .not. iszero (l_famt3 - yamt [3])
          f_fupdate ("C")
          reclock ()
       endif
-      replace fccnum with yccnum [3], fcctype with l_fpaytyp3
+      replace fccnum with f_encode(yccnum [3]), fcctype with l_fpaytyp3
       replace fccexp with yccexp [3], frectype with yrectype [3]
       replace ftranstyp with if (l_famt3 < 0.00, "C", "S")
       replace fauthonly with yauthonly [3], fauthamt with abs (l_famt3)

@@ -20,6 +20,8 @@
 * 07.01.99: set century on
 * 12.07.04: fix window xp printing problem
 * 03.11.08: add "T" keywords to print distinct rows
+* --
+* 07.12.11: special handling for encryption cc# (RACRED->FCCNUN)
 * ===========================================================================
 
 function f_rr
@@ -694,7 +696,11 @@ do while .not. eof ()
             val (right (l_rtype [i], 1)))
       else
          if l_rtype [i] = "C"
-            &ycell = f_truncate (&yfld, l_dlen [i])
+            if yfld $ "RACRED->FCCNUM"                            && 07.12.11: special handling for encrypted field
+			   &ycell = f_truncate (f_decode(&yfld), l_dlen [i])  &&
+            else        	
+			   &ycell = f_truncate (&yfld, l_dlen [i])
+			endif
             ybuffer = ybuffer + &ycell
          else
             &ycell = &yfld

@@ -13,6 +13,10 @@
 * add f_y2k: convert date to year 2000 format
 * ---
 * add f_goodem: valid email address
+* --
+* 07.12.11.
+* add f_encode: simple encryption
+* add f_decode: simple decryption
 * ===========================================================================
 * function f_popup ::= popup system message on line 24.
 * parameters xmessage ::= system message
@@ -2037,6 +2041,7 @@ enddo
 
 
 ******************************
+* --07.12.11: handle special encrypt field
 function f_retrieve
 
 private xfld, xlfld, n
@@ -2044,11 +2049,16 @@ private xfld, xlfld, n
 for n = 1 to fcount ()
    xfld = field (n)
    xlfld = "L_" + xfld
-   &xlfld = &xfld
+   if xlfld == "L_FCCNUM"        && exclude fccnum1, fccnum2, etc
+      &xlfld = f_decode(&xfld)
+   else
+      &xlfld = &xfld
+   endif
 next
 
 
 ******************************
+* --07.12.11: hand special encrypt field
 function f_replace
 
 private xfld, xlfld, n, ydate
@@ -2061,6 +2071,8 @@ for n = 1 to fcount ()
       ydate = &xlfld
       f_y2k (@ydate)
       replace &xfld with ydate
+   elseif xlfld == "L_FCCNUM"
+      replace &xfld with f_encode(&xlfld)
    else
       replace &xfld with &xlfld
    endif
@@ -3295,3 +3307,103 @@ otherwise
 endcase
 
 return yok
+
+* --
+* last char is also used as the key finder for the decryption
+*       i.e. make sure the first char of the key if unique from other key
+*       e.g. key1 = b, key2 = d, key3 = j
+*
+*   --------0123456789
+*   key1 = [biGsTonE17]
+*   key2 = [dIaMoND246]
+*   key3 = [jADeruBy35]
+*   -------------------
+* 
+* --simple encrytpion
+* --for now; only work for numbers 0 - 9; (for cc# encryption)
+*
+function f_encode
+parameter xnumber
+private key1, key2, key3
+private i, i1, k, s, ekey, ycode 
+
+if empty(xnumber)
+   return xnumber
+endif
+* make sure it is all number between 0 - 9
+for i = 1 to len(trim(xnumber))
+   * --numbers only please...
+   if substr(xnumber, i, 1) < "0" .or. substr(xnumber, i, 1) > "9"
+      return xnumber
+   endif
+next i
+* --
+
+key1 = [biGsTonE17]
+key2 = [dIaMoND246]
+key3 = [jADeruBy35]
+
+* --generate random # btw 0 to 2
+k = int(seconds())
+k = k - int(k / 3) * 3
+
+* --pick encryption key
+if k = 0 
+   ekey = key1
+elseif k = 1
+   ekey = key2
+else
+   ekey = key3
+endif
+
+* --encrypt using ekey
+s = trim(xnumber)
+ycode = ""
+for i = 1 to len(s)
+   i1 = val(substr(s,i,1))+1
+   ycode = ycode + substr(ekey,i1,1)  
+next i 
+ycode = ycode + substr(ekey, 1, 1)     && last check digit indicate the key used 
+ycode = f_truncate(ycode, len(xnumber))
+return ycode
+* --
+
+* --simple decrytpion
+* --for now; only work for numbers 0 - 9; (for cc# encryption)
+function f_decode
+parameter xnumber
+private key1, key2, key3
+private i, i1, k, s, ekey, ycode 
+
+if empty(xnumber)
+   return xnumber
+endif
+
+key1 = [biGsTonE17]
+key2 = [dIaMoND246]
+key3 = [jADeruBy35]
+k = substr(xnumber, len(trim(xnumber)), 1)    && check digit indicate key used
+if k = "b"
+   ekey = key1 
+elseif k = "d"
+   ekey = key2
+elseif k = "j"
+   ekey = key3
+else
+   return xnumber       && not a valid value
+endif
+
+ycode = ""
+for i = 1 to len(trim(xnumber)) - 1             && skip last char
+   i1 = at(substr(xnumber,i,1), ekey) 
+   if i1 > 0
+      i1 = i1 - 1             && account for 0
+   else
+      return xnumber          && not a valid value
+   endif
+   ycode = ycode + str(i1,1)
+next i
+ycode = f_truncate(ycode, len(xnumber))
+return ycode
+
+*--

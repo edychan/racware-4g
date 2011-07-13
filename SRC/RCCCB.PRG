@@ -14,6 +14,8 @@
 * edc: bug fixes for ndc capture
 * 05.01.99
 * Implement paymentech UTF format
+* --
+* 07.12.11: implement cc# encryption
 * ===========================================================================
 private yresponse, ybatch, ynewbatch, yerror, ybalance, yreccnt, yscn, yrow
 private ydetail, ybalance, ybal, yvoids, ydbr1, ydbr2
@@ -134,7 +136,7 @@ if gccnet = "NDC"
          * 11/19/93 edc: 
          select racred
          go stfil->frecno
-         ydetail = ydetail + tformat ("DB", fccnum, ;
+         ydetail = ydetail + tformat ("DB", f_decode(fccnum), ;
             alltrim (str (fauthamt)), ftranstyp, fauthcode, "", "T01")
          if yrow >= 21
             scroll (13, 2, 21, 76, 1)
@@ -142,7 +144,7 @@ if gccnet = "NDC"
             yrow = yrow + 1
          endif
          @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-         @ yrow, 21 say fccnum
+         @ yrow, 21 say f_decode(fccnum)
          @ yrow, 42 say fauthamt picture "99999.99"
          if ftranstyp = "V"
             yvoids = yvoids + 1
@@ -186,11 +188,11 @@ if gccnet = "NDC"
       select racred
       go stfil->frecno
       *
-      ydetail = tformat ("DB", fccnum, alltrim (str (fauthamt)), ;
+      ydetail = tformat ("DB", f_decode(fccnum), alltrim (str (fauthamt)), ;
          ftranstyp, fauthcode,"","T01") + fs
       yrow = yrow + 1
       @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-      @ yrow, 21 say fccnum
+      @ yrow, 21 say f_decode(fccnum)
       @ yrow, 42 say fauthamt picture "99999.99"
       if ftranstyp = "S" .or. ftranstyp = "F"
          ybal = ybal + fauthamt
@@ -222,7 +224,7 @@ if gccnet = "NDC"
       ycnt = 1
       ** important: send n-1 items, leave the last item in last block
       for i = 2 to yreccnt - 1
-         ydetail = ydetail + tformat ("DB" ,fccnum, ;
+         ydetail = ydetail + tformat ("DB" ,f_decode(fccnum), ;
             alltrim (str (fauthamt)), ftranstyp, fauthcode, "", "T01") ;
             + fs
          if yrow >= 21
@@ -231,7 +233,7 @@ if gccnet = "NDC"
             yrow = yrow + 1
          endif
          @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-         @ yrow, 21 say fccnum
+         @ yrow, 21 say f_decode(fccnum)
          @ yrow, 42 say fauthamt picture "99999.99"
          if ftranstyp = "V"
             @ yrow, 51 say "Void"
@@ -283,7 +285,7 @@ if gccnet = "NDC"
          yrow = yrow + 1
       endif
       @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-      @ yrow, 21 say fccnum
+      @ yrow, 21 say f_decode(fccnum)
       @ yrow, 42 say fauthamt picture "99999.99"
       if ftranstyp = "V"
          @ yrow, 51 say "Void"
@@ -294,7 +296,7 @@ if gccnet = "NDC"
          ybal = ybal - fauthamt
          @ yrow, 51 say "Credit"
       endif
-      ydetail = tformat ("DB", fccnum, ;
+      ydetail = tformat ("DB", f_decode(fccnum), ;
          alltrim (str (fauthamt)), ftranstyp, fauthcode,"","T01")
       
       ymessage = tformat ("LB", yterm_id, ydetail, ;
@@ -333,7 +335,7 @@ elseif gccnet = "LPA"
          yrow = yrow + 1
       endif
       @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-      @ yrow, 21 say fccnum
+      @ yrow, 21 say f_decode(fccnum)
       @ yrow, 42 say fauthamt picture "99999.99"
       if ftranstyp = "V"
          @ yrow, 51 say "Void"
@@ -443,11 +445,11 @@ elseif gccnet = "LPA"
       * 11/11/93 (edc) card or manual
       gccswipe = racred->fmname
       *
-      * ymessage = tformat ("DETAIL", rightjust (fccnum, 24, " "), ftranstyp, ;
+      * ymessage = tformat ("DETAIL", rightjust (f_decode(fccnum), 24, " "), ftranstyp, ;
       *    strtran (str (fauthamt, 8, 2)," ", "0"), fcctype, ;
       *    rightjust (fauthcode, 6, "0"), ;
       *    strtran (str (ycnt, 3), " ", "0"), yrainfo)
-      ymessage = tformat ("DETAIL", fccnum, ftranstyp, ;
+      ymessage = tformat ("DETAIL", f_decode(fccnum), ftranstyp, ;
          alltrim (str (fauthamt, 8, 2)), fcctype, ;
          rightjust (fauthcode, 6, "0"), ;
          strtran (str (ycnt, 3), " ", "0"), yrainfo,  ;
@@ -460,7 +462,7 @@ elseif gccnet = "LPA"
          yrow = yrow + 1
       endif
       @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-      @ yrow, 21 say fccnum
+      @ yrow, 21 say f_decode(fccnum)
       @ yrow, 42 say fauthamt picture "99999.99"
       if ftranstyp = "V"
          @ yrow, 51 say "Void"
@@ -534,7 +536,7 @@ do while .not. eof ()
       yrow = yrow + 1
    endif
    @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-   @ yrow, 21 say fccnum
+   @ yrow, 21 say f_decode(fccnum)
    @ yrow, 42 say fauthamt picture "99999.99"
    @ yrow, 51 say "Updated"
    f_fupdate ("C")

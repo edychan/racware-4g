@@ -5,7 +5,9 @@
 * author: KST
 *
 * revision
-*
+* --
+* 07.12.11: add encryption for cc#
+*           f_encode / f_decode
 * ===========================================================================
 parameters xupdtype
 private yarray [7], yptr, ykey, yexp, yscn, yans, ycolor, ytitle
@@ -36,29 +38,29 @@ if xupdtype = "U"
       ykey = "l_floc + str (l_frano, 6)"
       ytitle = "Contract Number컴횮redit Card Number"
       yexp = "f_truncate (floc + [-] + ltrim (str (frano, 6)), 17) + " + ;
-         "[ ] + fccnum"
+         "space(7) + f_decode(fccnum)"       
       l_floc = gloc
       @ 04, 04 say "Contract Loc/Contract No           -"
       @ 04, 29 get l_floc picture "!!!!!!!!!!"
       @ 04, 40 get l_frano picture "999999"
    case yptr = 2
       ykey = "upper (l_flname)"
-      ytitle = "Name컴컴컴컴컴컴컴컴컴컴컴컴컴Credit Care Number"
-      yexp = "f_truncate (trim (flname) + [, ] + ffname, 28) + [ ] + fccnum"
+      ytitle = "Name컴컴컴컴컴컴컴컴컴컴컴횮redit Card Number"
+      yexp = "f_truncate (trim (flname) + [, ] + ffname, 28) + [ ] + f_decode(fccnum)"
       @ 04, 04 say "Last Name ................."
       @ 04, 32 get l_flname
    case yptr = 3
       ykey = "str (l_fbatch, 5) + str (l_fitem, 3)"
       ytitle = "Batch/Item횮redit Card Number"
-      yexp = "str (fbatch, 5) + [/] + str (fitem, 3) + [  ] + fccnum"
+      yexp = "str (fbatch, 5) + [/] + str (fitem, 3) + space(6) + f_decode(fccnum)"
       @ 04, 04 say "Batch/Item Number ..............      /   "
       @ 04, 37 get l_fbatch picture "99999"
       @ 04, 43 get l_fitem picture "999"
    case yptr = 4
-      ykey = "l_fccnum"
-      ytitle = "Credit Care Number컴Trans횲unc컴Amount"
-      yexp = "fccnum + [ ] + ftranstyp + [     ] + str (frectype, 1) " + ;
-         "+ [  ] + str (fauthamt, 8, 2)"
+      ykey = "f_decode(l_fccnum)"
+      ytitle = "Credit Care Number컴Trans횲unc컴컴Amount"
+      yexp = "f_decode(fccnum) + space(2) + ftranstyp + space(5) + str (frectype, 1) " + ;
+         "+ space(3) + str (fauthamt, 8, 2)"
       @ 04, 04 say "Credit Card Number .."
       @ 04, 26 get l_fccnum
       yptr = 5

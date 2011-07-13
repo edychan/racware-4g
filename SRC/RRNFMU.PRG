@@ -32,6 +32,8 @@
 * ---------------------------------------------------------------------------
 * 01.08.09: set century on for update contract
 * 10.15.09: add new flag [P]ersonal/[B]usiness
+* --
+* 07.12.11: add encrypt for cc# in racred.dbf
 * ===========================================================================
 parameters xtyp
 private yadriver, yothchg, yestamt, ycdwyn, ypaiyn
@@ -686,7 +688,7 @@ do while .t.
       * 06/04 edc - take out rrnfmu32 function in f_pick_f 
       *       problem reported by PV.   
       if f_pick_f (13, 16, "", "Credit Card NumberÄÄÄHold Amt", ;
-            "fccnum + [ ] + str (fauthamt, 8, 2)", "", ;
+            "f_decode(fccnum) + [ ] + str (fauthamt, 8, 2)", "", ;          && 07.12.11
             "floc + str (frano, 6)", "raagr->floc + str (raagr->frano, 6)")
 
          yans = f_confirm ("Are you sure ? [Y/N]", "YN")
@@ -793,7 +795,7 @@ do while .t.
             replace fauthonly with yauthonly, fauthamt with abs (yamt)
             replace fauthcode with yauthcode, fauthstat with yauthstat
             replace fauthdate with date (), fauthtime with time ()
-            replace fccexp with yexp, fccnum with yccnum
+            replace fccexp with yexp, fccnum with f_encode(yccnum)           && 07.12.11:
             replace fcctype with ypaytyp, ffname with raagr->ffname
             replace flname with raagr->flname, floc with raagr->floc
             replace frano with raagr->frano, frectype with yrectype
@@ -853,7 +855,7 @@ yfnd = .f.
 if ypaytyp = [VA]
    f_use ('RACRED', 5)    && by ccnum
    seek yccnum
-   do while .not. eof () .and. fccnum = yccnum
+   do while .not. eof () .and. f_decode(fccnum) = yccnum                   && 07.12.11
       if ftranstyp = "S" .and. frectype = 2 .and. .not.empty(fauthcode) ;
          .and. fmname = "C"     && must be swipe to do incr. auth.
          yfnd = .t.

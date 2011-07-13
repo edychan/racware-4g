@@ -62,6 +62,8 @@
 * 7 -> MID;FULL;MINI;EXP;EXPD;SUB;2PU;3PU;SCAB;TUND;3CAG;3CAD;44D3;44G3;2VAN;EVAN;
 * 12-> 12PV;15PV;15VV;HVAN;
 * otherwise; PAI = 0
+* --
+* 07.12.11: add encryption for cc# in racred.dbf
 * ===========================================================================
 f_clrscn ("Open Rental Agreement")
 f_popup ("Please Wait...")
@@ -312,7 +314,7 @@ do while .t.
          replace fauthonly with l_fauthonly, fauthamt with l_fhldamt
          replace fauthcode with l_fauthcd1, fauthstat with l_fauthstat
          replace fauthdate with date (), fauthtime with time ()
-         replace fccexp with l_fccexp1, fccnum with l_fccnum1
+         replace fccexp with l_fccexp1, fccnum with f_encode(l_fccnum1)              && 07.12.11
          replace fcctype with l_fpaytyp1, ffname with l_ffname
          replace flname with l_flname, floc with l_floc
          replace fmname with gccswipe        && 11/11/93 card swipe or manual

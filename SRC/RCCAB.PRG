@@ -1,3 +1,9 @@
+* --
+* Batch Authorization
+* --
+* 07.12.11: add encryption
+* --
+
 private yerror, yreccnt, ycnt, yterm_id
 private yresponse, yauthcode, yrow, yscn, yloc
 
@@ -138,13 +144,13 @@ do while .not. eof ()
    if gccnet = "NDC"
       do case
       case ftranstyp = "S"
-         ymessage = tformat ("S", yterm_id, fccnum, fccexp, ;
+         ymessage = tformat ("S", yterm_id, f_decode(fccnum), fccexp, ;
             alltrim (str (fauthamt)))
       case ftranstyp = "C"
-         ymessage = tformat ("C", yterm_id, fccnum, fccexp, ;
+         ymessage = tformat ("C", yterm_id, f_decode(fccnum), fccexp, ;
             alltrim (str (fauthamt)))
       case ftranstyp = "F"
-         ymessage = tformat ("F", yterm_id, fccnum, fccexp, ;
+         ymessage = tformat ("F", yterm_id, f_decode(fccnum), fccexp, ;
             alltrim (str (fauthamt)), fauthcode)
       otherwise
          select stfil
@@ -155,15 +161,15 @@ do while .not. eof ()
       do case
       case ftranstyp = "S"
          ymessage = tformat ("S", __gcompuid, __gmerch, __gtermid, ;
-            __gserial, "001", "B", fccnum, fccexp, "", ;
+            __gserial, "001", "B", f_decode(fccnum), fccexp, "", ;
             alltrim (str (fauthamt)))
       case ftranstyp = "C"
          ymessage = tformat ("S", __gcompuid, __gmerch, __gtermid, ;
-            __gserial, "001", "B", fccnum, fccexp, "", ;
+            __gserial, "001", "B", f_decode(fccnum), fccexp, "", ;
             alltrim (str (fauthamt)))
       case ftranstyp = "F"
          ymessage = tformat ("S", __gcompuid, __gmerch, __gtermid, ;
-            __gserial, "123", "B", fccnum, fccexp, "", ;
+            __gserial, "123", "B", f_decode(fccnum), fccexp, "", ;
             alltrim (str (fauthamt)))
       otherwise
          select stfil
@@ -178,7 +184,7 @@ do while .not. eof ()
       yrow = yrow + 1
    endif
    @ yrow, 03 say alltrim (floc) + "-" + ltrim (str (frano, 6))
-   @ yrow, 21 say fccnum
+   @ yrow, 21 say f_decode(fccnum)
    @ yrow, 42 say fauthamt picture "99999.99"
 
    yerror = snd_recv ("BT", ymessage, @yresponse, "Transaction # " ;

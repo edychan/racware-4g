@@ -1,3 +1,6 @@
+* --
+* add f_encode + f_decode for racred index
+*
 public gstation, gdbfpath, gmempath, gstnpath, gmsgpath
 public gdbffiles, gstnfiles, gusrid, gusrgp
 public gmesscolor, gbluecolor, gblueget, gmenuback, glgincolor
@@ -416,4 +419,3 @@ enddo
 use
 f_popback ()
 
-

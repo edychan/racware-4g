@@ -62,25 +62,25 @@ do while .t.
             f_use ("racust", 2)
             yval = space (15)
          elseif yret = 2
-            f_use ("racust", 1)
+            f_use ("racust", 1)     && use last name order
             yval = space (14)
          elseif yret = 3
-            f_use ("racust", 4)
+            f_use ("racust", 4)     && use first name order
             yval = space (12)
 		 else
-            f_use ("racust" ,1)     && use last name order for user id
+            f_use ("racust" ,5)     && 07.05.11: new index racust5=>fid1+upper(trim(ffname)+trim(flname))
             yval = space (3)
          endif
          @ 02, 05 say yarray[yret] get yval
          read
          yval = upper (yval)
-         if yret < 4
+         if yret < 5                    && < 4 will activate the else clause; disable for now
             set softseek on
             set exact off
             seek yval
             set softseek off
 		 else
-		    set filter to FID1 = yval
+		    set filter to FID1 = yval    && set flter may be too slow...
 			go top
          endif
          * --06.06.11		 
@@ -92,7 +92,7 @@ do while .t.
          endif
          if (found () .and. yret = 1) .or. ;
                f_pick_f (02, 3, "", "Customer No.컴컴First Name컴컴횸ast " + ;
-               "Name컴컴Last Checkout/Modified", "fcustno+[ ]+ffname+space(3)+flname+[ ]+dtoc(fckout)+space(4)+dtoc(fmoddt)")
+               "Name컴컴Last Checkout/Modified컴�", "fcustno+[ ]+ffname+space(3)+flname+[ ]+dtoc(fckout)+space(4)+dtoc(fmoddt)+[ ]+fid1")
             f_update ("racust", "racust", "", "rmkcust1")
             close databases
          endif

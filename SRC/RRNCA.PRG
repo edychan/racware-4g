@@ -37,6 +37,8 @@
 * 03.08.01: take out sup update here(except raagrx), perform in dbr process
 * 02.26.02: provide xtra day calculation
 * 06.27.06: compare fuel charge calc (rrnca351)
+* --
+* 07.12.11: add encryption for cc# in racred.dbf
 * ===========================================================================
 set century on        && 10.21.99
 store space (15) to yitem1, yitem2, yitem3, yitem4
@@ -218,7 +220,7 @@ do while .t.
             f_use ("RACRED", 1)
             seek l_floc + str (l_frano, 6)
             do while floc = l_floc .and. frano = l_frano .and. .not. eof ()
-               if .not. (fccnum $ (l_fccnum1 + ";" + l_fccnum2 ;
+               if .not. (f_decode(fccnum) $ (l_fccnum1 + ";" + l_fccnum2 ;            && 07.12.11
                      + ";" + l_fccnum3)) .or. (frectype <> __gccuncap .and. ;
                      frectype <> __gcccap)
                   reclock ()
@@ -243,8 +245,8 @@ do while .t.
                   ystr6 = "YAUTHONLY" + str (y, 1)
                   ystr7 = "YRECTYP" + str (y, 1)
                   ystr8 = "YAUTHSTAT" + str (y, 1)
-                  ystr9 = "YCCSWIPE" + str (y, 1)      && 11/11/93 card swipe or manual enter
-                  replace fccnum with &ystr1, fcctype with &ystr2
+                  ystr9 = "YCCSWIPE" + str (y, 1)                               && 11/11/93 card swipe or manual enter
+                  replace fccnum with f_encode(&ystr1), fcctype with &ystr2     && 07.12.11
                   replace fccexp with &ystr3, fauthcode with &ystr4
                   replace fauthamt with abs (&ystr5), fauthonly with &ystr6
                   replace frectype with if (empty (gccnet), __gccuncap, &ystr7)
@@ -1439,9 +1441,9 @@ if l_fpaycod1 = 1 .and. good_cctype (l_fpaytyp1, @yauthonly1)
       yauthcd = l_fauthcd1
       private yfnd
       yfnd = .f.
-      f_use ("RACRED", 5)    && by ccnum
-      seek l_fccnum1
-      do while .not. eof () .and. fccnum = l_fccnum1
+      f_use ("RACRED", 5)                                             && by ccnum
+      seek l_fccnum1                                                  && 07.12.11: = f_decode(fccnum)
+      do while .not. eof () .and. f_decode(fccnum) = l_fccnum1        && 07.12.11
          if ftranstyp = "S" .and. frectype = 2 .and. .not.empty(fauthcode) ;
             .and. fmname = "C"     && must be swipe to do incr/reverse auth.
             yfnd = .t.
@@ -1476,7 +1478,7 @@ if l_fpaycod1 = 1 .and. good_cctype (l_fpaytyp1, @yauthonly1)
             .not. empty (raagr->fauthcd1) .and. (l_floc <> l_frloc)
          l_fauthcd1 = raagr->fauthcd1
          f_findblank ()
-         replace fccnum with l_fccnum1, fcctype with l_fpaytyp1
+         replace fccnum with f_encode(l_fccnum1), fcctype with l_fpaytyp1          && 07.12.11
          replace fccexp with l_fccexp1, fauthcode with l_fauthcd1
          replace fauthamt with l_famt1-yauthtot, fauthonly with yauthonly1
          replace frectype with __gccauth, fauthstat with yauthstat1
@@ -1501,7 +1503,7 @@ if l_fpaycod1 = 1 .and. good_cctype (l_fpaytyp1, @yauthonly1)
          if yret = "D"
             yccswipe1 = gccswipe      && save gccswipe set in tformat
             f_findblank ()
-            replace fccnum with l_fccnum1, fcctype with l_fpaytyp1
+            replace fccnum with f_encode(l_fccnum1), fcctype with l_fpaytyp1       && 07.12.11
             replace fccexp with l_fccexp1, fauthcode with l_fauthcd1
             replace fauthamt with l_famt1-yauthtot, fauthonly with yauthonly1
             replace frectype with __gccauth, fauthstat with yauthstat1
@@ -1594,11 +1596,10 @@ yccnum2 = l_fccnum2
 yamtdue2 = l_famt2
 if l_fpaycod2 = 1 .and. good_cctype (l_fpaytyp2, @yauthonly2)
    f_use ("racred", 1)
-   seek l_floc + str (l_frano, 6) + l_fccnum2
+   seek l_floc + str (l_frano, 6) + l_fccnum2          && 07.12.11: should be ok as is = f_decode(fccnum)
    private yauthtot
    yauthtot = 0.00
-   do while l_floc + str (l_frano, 6) + l_fccnum2 = floc + str (frano, 6) + ;
-         fccnum
+   do while l_floc + str (l_frano, 6) + l_fccnum2 = floc + str (frano, 6) + f_decode(fccnum)
       if frectype = __gccauth
          yauthtot = yauthtot + if (ftranstyp = "C", -1, 1) * abs (fauthamt)
          yauthstat2 = fauthstat          && 10.25.99: retain network id
@@ -1613,7 +1614,7 @@ if l_fpaycod2 = 1 .and. good_cctype (l_fpaytyp2, @yauthonly2)
             .not. empty (raagr->fauthcd1) .and. (l_floc <> l_frloc)
          l_fauthcd2 = raagr->fauthcd1
          f_findblank ()
-         replace fccnum with l_fccnum2, fcctype with l_fpaytyp2
+         replace fccnum with f_encode(l_fccnum2), fcctype with l_fpaytyp2
          replace fccexp with l_fccexp2, fauthcode with l_fauthcd2
          replace fauthamt with l_famt2-yauthtot, fauthonly with yauthonly2
          replace frectype with __gccauth, fauthstat with yauthstat2
@@ -1638,7 +1639,7 @@ if l_fpaycod2 = 1 .and. good_cctype (l_fpaytyp2, @yauthonly2)
          if yret = "D"
             yccswipe2 = gccswipe      && save gccswipe set in tformat
             f_findblank ()
-            replace fccnum with l_fccnum2, fcctype with l_fpaytyp2
+            replace fccnum with f_encode(l_fccnum2), fcctype with l_fpaytyp2
             replace fccexp with l_fccexp2, fauthcode with l_fauthcd2
             replace fauthamt with l_famt2-yauthtot, fauthonly with yauthonly2
             replace frectype with __gccauth, fauthstat with yauthstat2
@@ -1734,11 +1735,10 @@ yccnum3 = l_fccnum3
 yamtdue3 = l_famt3
 if l_fpaycod3 = 1 .and. good_cctype (l_fpaytyp3, @yauthonly3)
    f_use ("racred", 1)
-   seek l_floc + str (l_frano, 6) + l_fccnum3
+   seek l_floc + str (l_frano, 6) + l_fccnum3                     && 07.12.11: should be ok as is
    private yauthtot
    yauthtot = 0.00
-   do while l_floc + str (l_frano, 6) + l_fccnum3 = floc + str (frano, 6) + ;
-         fccnum
+   do while l_floc + str (l_frano, 6) + l_fccnum3 = floc + str (frano, 6) + f_decode(fccnum)
       if frectype = __gccauth
          yauthtot = yauthtot + if (ftranstyp = "C", -1, 1) * abs (fauthamt)
          yauthstat3 = fauthstat          && 10.25.99: retain network id
@@ -1753,7 +1753,7 @@ if l_fpaycod3 = 1 .and. good_cctype (l_fpaytyp3, @yauthonly3)
             .not. empty (raagr->fauthcd1) .and. (l_floc <> l_frloc)
          l_fauthcd3 = raagr->fauthcd1
          f_findblank ()
-         replace fccnum with l_fccnum3, fcctype with l_fpaytyp3
+         replace fccnum with f_encode(l_fccnum3), fcctype with l_fpaytyp3
          replace fccexp with l_fccexp3, fauthcode with l_fauthcd3
          replace fauthamt with l_famt3-yauthtot, fauthonly with yauthonly3
          replace frectype with __gccauth, fauthstat with yauthstat3
@@ -1778,7 +1778,7 @@ if l_fpaycod3 = 1 .and. good_cctype (l_fpaytyp3, @yauthonly3)
          if yret = "D"
             yccswipe3 = gccswipe      && save gccswipe set in tformat
             f_findblank ()
-            replace fccnum with l_fccnum3, fcctype with l_fpaytyp3
+            replace fccnum with f_encode(l_fccnum3), fcctype with l_fpaytyp3
             replace fccexp with l_fccexp3, fauthcode with l_fauthcd3
             replace fauthamt with l_famt3-yauthtot, fauthonly with yauthonly3
             replace frectype with __gccauth, fauthstat with yauthstat3
