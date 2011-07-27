@@ -524,9 +524,6 @@ select mgmt_1t
 use
 
 *************************************
-* Vehicle Tally Report
-* --
-* 07.21.11: group by car class
 procedure mgmt_2
 private ydate, ymo, yyr, ystart, yend, ydays, ystatus, yln, ylcnt, ydisp
 private ylogic, y1, y2, y3, ytotal, ycars
@@ -575,11 +572,6 @@ if .not. file (gstnpath + "mgmt_2.dbf")
    replace field_type with "C"
    replace field_len with 10
    replace field_dec with 0
-   append blank                      && 07.21.11: add car class
-   replace field_name with "FCLASS"
-   replace field_type with "C"
-   replace field_len with 5
-   replace field_dec with 0
    append blank
    replace field_name with "FSTATUS"
    replace field_type with "C"
@@ -600,7 +592,7 @@ do while .not. eof ()
    seek ravm->funit
    if eof () .and. ravm->fpurdt <= yend       && ignore new acq. vehicles
       append blank
-      replace funit with ravm->funit, fclass with ravm->fclass, fstatus with replicate("0",31)
+      replace funit with ravm->funit, fstatus with replicate("0",31)
    endif
    select ravm
    skip
@@ -636,7 +628,7 @@ do while fdatein <= yend .and. .not. eof ()
       seek raagrh->funit
       if eof ()
          append blank
-         replace funit with raagrh->funit, fclass with raagrh->fclass, fstatus with replicate("0",31)    && 07.21.11
+         replace funit with raagrh->funit, fstatus with replicate("0",31)
       endif
       replace fstatus with stuff (fstatus, y1, y2, replicate ("1",y2))
    endif
@@ -691,11 +683,11 @@ if eof ()
 endif 
 
 l_ftitle = "Monthly Vehicle Tally Report"+[   For: ]+ ymo + [/] + yyr
-l_header = ""
+l_header = space(12)
 for i = 1 to ydays
-   l_header = l_header + str(i,4)
+   l_header = l_header + str(i,3)
 next
-l_header = l_header+" TOTAL"
+l_header = l_header + [  ] + [**T O T A L**]
 yc1 = max (20, int (l_formlen/2) - int (len (gtitle) / 2))
 yc2 = max (20, int (l_formlen/2) - int (len (l_ftitle) / 2))
 yc3 = l_formlen - 12
@@ -711,61 +703,27 @@ endif
 
 yrow = mgmt_hdr (ydisp, .f.)
 
-* --07.21.11: output by car class
-private ystot [ydays]
-afill (ystot, 0)
-yscars = 0
-ystotal = 0
-* --
 private ytot [ydays]
 afill (ytot, 0)
 ytotal = 0
 select mgmt_2
-index on fclass+funit to (gstnpath + "mgmt_2")    && group by car class
 go top
-ycars = 0
-yclas = fclass
+ycars = reccount ()
 do while .not. eof ()
    yrow = if (int (yrow/55)*55 = yrow, mgmt_hdr (ydisp, .t.), yrow)
-   if yclas <> fclass         && output subtotal
-      yrow = yrow + 2
-	  @ yrow, 01 say "Class: "+yclas
-	  yrow = yrow + 1
-	  @ yrow, 01 say "Units: "+str(yscars,4)
-	  yrow = yrow + 1
-      ystr = ""
-      for i = 1 to ydays 
-         ystr = ystr + str(ystot[i],4) 
-      next
-      ystr = ystr + [ ] + str(ystotal,4)
-      @ yrow, 01 say ystr
-      yrow = yrow + 1
-      ystr = " "
-      for i = 1 to ydays 
-         ystr = ystr + str(ystot[i]/yscars*100,3)+[%]
-      next   
-      ystr = ystr + [ ] + str(ystotal/(yscars*ydays)*100,3)+[%]
-      @ yrow, 01 say ystr
-      * -- zero out subtotal
-	  yclas = fclass
-	  yscars = 0
-	  ystotal = 0
-      afill (ystot, 0)
-   endif
+   ystr = ""
+   y1 = 0
    for i = 1 to ydays
+      ystr = ystr + space(2) + substr(fstatus,i,1) 
       if substr(fstatus,i,1) = "1"
-         ystot [i] = ystot [i] + 1     && car group subtotal
-         ystotal = ystotal + 1
-         ytot [i] = ytot [i] + 1       && grand total
+         y1 = y1 + 1
+         ytot [i] = ytot [i] + 1
          ytotal = ytotal + 1
       endif
    next 
-   yscars = yscars + 1
-   ycars = ycars + 1
-
-   * ystr = funit+[  ]+ystr+[  ]+str(y1,3)+[  ]+str(y1/ydays*100,5,1)+[%]
-   * @ yrow, 01 say ystr
-   * yrow = yrow + 1
+   ystr = funit+[  ]+ystr+[  ]+str(y1,3)+[  ]+str(y1/ydays*100,5,1)+[%]
+   @ yrow, 01 say ystr
+   yrow = yrow + 1
    skip
 enddo
 * output summary
@@ -810,7 +768,6 @@ use
 * -- add file as a option
 * -- add Detail/Summary
 * -- stop use ravm->fclass, instead use raagrh->fclass
-* 07.26.11: take out Detail option, group by vehicle class
 procedure mgmt_3
 private ystart, yend, yclass, yfnd, ystatus, yln, ylcnt, ydisp, ylogic
 
@@ -839,11 +796,11 @@ ystart = date()
 yend = date()
 ydetail = .t.
 
-* @ 07, 3 say "Class....." get yclass pict "!!!!"
+@ 07, 3 say "Class....." get yclass pict "!!!!"
 @ 08, 3 say "From......" get ystart pict "@D" valid f_y2k (@ystart)
 @ 09, 3 say "To........" get yend pict "@D" valid ;
   f_valid (f_y2k (@yend) .and.  yend >= ystart)
-* @ 10, 3 say "Detail...." get ydetail pict "Y"
+@ 10, 3 say "Detail...." get ydetail pict "Y"
 if f_rd () = 27
   return
 endif
@@ -854,8 +811,8 @@ if .not. file (gstnpath + "mgmt_3.dbf")
    use (gstnpath + "stru") exclusive
    append blank
    replace field_name with "FUNIT"
-   replace field_type with "N"
-   replace field_len with 5
+   replace field_type with "C"
+   replace field_len with 10
    replace field_dec with 0
    append blank
    replace field_name with "FCLASS"
@@ -893,50 +850,30 @@ if .not. file (gstnpath + "mgmt_3.dbf")
 endif
 use (gstnpath + "mgmt_3") exclusive alias mgmt_3
 zap
-* index on funit+fclass to (gstnpath + "mgmt_3")
-index on fclass to (gstnpath + "mgmt_3")      && group by car class
+index on funit+fclass to (gstnpath + "mgmt_3")
 
-* 07.26.11: implement new report requirement => class,#units,T&M,CDW,#days,Revenue,Rev/Unit
-
-* -- build # car class from ravm
+* -- 06.29.11: stop look in vm for the car class, otherwise sold vehicles cannot be accounted for ...
 f_use ("ravm")
-go top
-do while .not. eof ()
-   if .not.empty(ravm->fclass)
-      select mgmt_3
-      seek ravm->fclass
-      if eof () .and. ravm->fpurdt <= yend       && ignore new acq. vehicles
-         append blank
-         replace fclass with ravm->fclass, funit with 1
-      else
-         replace funit with funit + 1  	  
-      endif
-   endif
-   select ravm
-   skip
-enddo
-select ravm 
-use
-
 f_use ("raagrh",4)
+set relation to funit into ravm
 select raagrh
 set softseek on
 seek ystart
 set softseek off
 do while fdatein <= yend .and. .not. eof ()
-   if empty(raagrh->fclass)
-      skip
-	  loop
-   endif	  
    select mgmt_3
-   seek raagrh->fclass
+   seek raagrh->funit
    if eof()
-      select mgmt_3 
-      append blank
-      replace fclass with raagrh->fclass    
-      replace ftnm with raagrh->ftmetot+raagrh->fmlgtot, fcdw with raagrh->fcdwtot
-      ydays = raagrh->fdatein-raagrh->fdateout
-      replace fdays with if(ydays>0, ydays, 1)
+      * if ravm->fclass = yclass
+      if raagrh->fclass = yclass
+         select mgmt_3 
+         append blank
+         replace funit with raagrh->funit, fclass with raagrh->fclass    && instead of ravm->fclass
+         replace fmodel with ravm->fyear+[ ]+ravm->fmodel, fprice with ravm->fpuramt
+         replace ftnm with raagrh->ftmetot+raagrh->fmlgtot, fcdw with raagrh->fcdwtot
+         ydays = raagrh->fdatein-raagrh->fdateout
+         replace fdays with if(ydays>0, ydays, 1)
+      endif
    else
       ydays = raagrh->fdatein-raagrh->fdateout
       rlock ()
@@ -947,6 +884,8 @@ do while fdatein <= yend .and. .not. eof ()
    select raagrh
    skip     
 enddo   
+select ravm 
+use 
 select raagrh
 use
 
@@ -957,15 +896,15 @@ if eof ()
    use
    return
 else
-   store 0 to sumunit, sumtnm, sumcdw, sumdays, sumrev, sumavg
-   sum funit, ftnm, fcdw, ftnm+fcdw, fdays, (ftnm+fcdw)/funit to   ;
-       sumunit, sumtnm, sumcdw, sumrev, sumdays, sumavg
+   store 0 to sumtnm, sumcdw, sumdays, sumrev, sumavg
+   sum ftnm, fcdw, ftnm+fcdw, fdays, (ftnm+fcdw)/fdays to   ;
+       sumtnm, sumcdw, sumrev, sumdays, sumavg
 endif 
 
 l_ftitle = "Vehicle Revenue Report"+[ / ]+yclass+[ From: ]+dtoc(ystart)+  ;
            [ to: ]+dtoc(yend)
-l_header = "Class    # Units         T & M     "+  ;
-           " CDW   # Days    Revenue    Rev/Unit"
+l_header = "UNIT #    MODEL        PURCHASE     T & M    "+  ;
+           "CDW   # DAYS  REVENUE AVG REV."
 yc1 = max (20, int (l_formlen/2) - int (len (gtitle) / 2))
 yc2 = max (20, int (l_formlen/2) - int (len (l_ftitle) / 2))
 yc3 = l_formlen - 12
@@ -982,9 +921,9 @@ select mgmt_3
 go top
 do while .not. eof ()
    yrow = if (int (yrow/55)*55 = yrow, mgmt_hdr (ydisp, .t.), yrow)
-   ystr = fclass+[   ]+str(funit,6)+space(7)+str(ftnm,10,2)+[  ]+  ;
-          str(fcdw,8,2)+[  ]+str(fdays,4)+[   ]+str(ftnm+fcdw,10,2)+[    ]+   ;
-          str((ftnm+fcdw)/funit,8,2)
+   ystr = funit+[ ]+fmodel+[ ]+str(fprice,8,2)+[ ]+str(ftnm,8,2)+[ ]+  ;
+          str(fcdw,8,2)+[ ]+str(fdays,4)+[ ]+str(ftnm+fcdw,8,2)+[ ]+   ;
+          str((ftnm+fcdw)/fdays,8,2)
    @ yrow, 01 say ystr
    yrow = yrow + 1
    skip
@@ -993,8 +932,8 @@ enddo
 endif
 * output summary
 yrow = yrow + 2
-ystr = space(7)+str(sumunit,6)+space(7)+str(sumtnm,10,2)+[  ]+str(sumcdw,8,2)+  ;
-      [  ]+str(sumdays,4)+[   ]+str(sumrev,10,2)+[    ]+str(sumrev/sumunit,8,2)
+ystr = space(34)+str(sumtnm,8,2)+[ ]+str(sumcdw,8,2)+  ;
+      [ ]+str(sumdays,4)+[ ]+str(sumrev,8,2)+[ ]+str(sumavg,8,2)
 @ yrow,1 say ystr
 
 mgmt_end (yrow)

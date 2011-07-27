@@ -14,7 +14,7 @@
 * ---
 * add f_goodem: valid email address
 * --
-* 07.12.11.
+* 07.12.11.  ** disable for now
 * add f_encode: simple encryption
 * add f_decode: simple decryption
 * ===========================================================================
@@ -3327,6 +3327,10 @@ parameter xnumber
 private key1, key2, key3
 private i, i1, k, s, ekey, ycode 
 
+*-- disable for now...
+return xnumber
+* --
+
 if empty(xnumber)
    return xnumber
 endif
@@ -3374,6 +3378,10 @@ function f_decode
 parameter xnumber
 private key1, key2, key3
 private i, i1, k, s, ekey, ycode 
+
+* --disable for now
+return xnumber
+* --
 
 if empty(xnumber)
    return xnumber
