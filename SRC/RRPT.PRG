@@ -596,11 +596,13 @@ zap
 f_use ("ravm")
 go top
 do while .not. eof ()
-   select mgmt_2
-   seek ravm->funit
-   if eof () .and. ravm->fpurdt <= yend       && ignore new acq. vehicles
-      append blank
-      replace funit with ravm->funit, fclass with ravm->fclass, fstatus with replicate("0",31)
+   if .not.empty(ravm->fclass) .and. .not.empty(ravm->funit)
+      select mgmt_2
+      seek ravm->funit
+      if eof () .and. ravm->fpurdt <= yend       && ignore new acq. vehicles
+         append blank
+         replace funit with ravm->funit, fclass with ravm->fclass, fstatus with replicate("0",31)
+      endif
    endif
    select ravm
    skip
@@ -725,9 +727,9 @@ index on fclass+funit to (gstnpath + "mgmt_2")    && group by car class
 go top
 ycars = 0
 yclas = fclass
-do while .not. eof ()
+do while .t.    &&    .not. eof ()
    yrow = if (int (yrow/55)*55 = yrow, mgmt_hdr (ydisp, .t.), yrow)
-   if yclas <> fclass         && output subtotal
+   if yclas <> fclass .or. eof()        && output subtotal
       yrow = yrow + 2
 	  @ yrow, 01 say "Class: "+yclas
 	  yrow = yrow + 1
@@ -747,10 +749,14 @@ do while .not. eof ()
       ystr = ystr + [ ] + str(ystotal/(yscars*ydays)*100,3)+[%]
       @ yrow, 01 say ystr
       * -- zero out subtotal
-	  yclas = fclass
-	  yscars = 0
-	  ystotal = 0
-      afill (ystot, 0)
+      if eof ()
+	     exit
+      else
+         yclas = fclass
+	     yscars = 0
+	     ystotal = 0
+         afill (ystot, 0)
+	  endif
    endif
    for i = 1 to ydays
       if substr(fstatus,i,1) = "1"
@@ -875,12 +881,12 @@ if .not. file (gstnpath + "mgmt_3.dbf")
    append blank
    replace field_name with "FTNM"
    replace field_type with "N"
-   replace field_len with 10
+   replace field_len with 11
    replace field_dec with 2
    append blank
    replace field_name with "FCDW"
    replace field_type with "N"
-   replace field_len with 10
+   replace field_len with 11
    replace field_dec with 2
    append blank
    replace field_name with "FDAYS"
@@ -902,7 +908,7 @@ index on fclass to (gstnpath + "mgmt_3")      && group by car class
 f_use ("ravm")
 go top
 do while .not. eof ()
-   if .not.empty(ravm->fclass)
+   if .not.empty(ravm->fclass) .and. .not.empty(ravm->funit)
       select mgmt_3
       seek ravm->fclass
       if eof () .and. ravm->fpurdt <= yend       && ignore new acq. vehicles
@@ -965,7 +971,7 @@ endif
 l_ftitle = "Vehicle Revenue Report"+[ / ]+yclass+[ From: ]+dtoc(ystart)+  ;
            [ to: ]+dtoc(yend)
 l_header = "Class    # Units         T & M     "+  ;
-           " CDW   # Days    Revenue    Rev/Unit"
+           "   CDW   # Days      Revenue    Rev/Unit"
 yc1 = max (20, int (l_formlen/2) - int (len (gtitle) / 2))
 yc2 = max (20, int (l_formlen/2) - int (len (l_ftitle) / 2))
 yc3 = l_formlen - 12
@@ -982,8 +988,8 @@ select mgmt_3
 go top
 do while .not. eof ()
    yrow = if (int (yrow/55)*55 = yrow, mgmt_hdr (ydisp, .t.), yrow)
-   ystr = fclass+[   ]+str(funit,6)+space(7)+str(ftnm,10,2)+[  ]+  ;
-          str(fcdw,8,2)+[  ]+str(fdays,4)+[   ]+str(ftnm+fcdw,10,2)+[    ]+   ;
+   ystr = fclass+[   ]+str(funit,6)+space(7)+str(ftnm,11,2)+[  ]+  ;
+          str(fcdw,10,2)+[  ]+str(fdays,5)+[   ]+str(ftnm+fcdw,11,2)+[    ]+   ;
           str((ftnm+fcdw)/funit,8,2)
    @ yrow, 01 say ystr
    yrow = yrow + 1
@@ -993,8 +999,8 @@ enddo
 endif
 * output summary
 yrow = yrow + 2
-ystr = space(7)+str(sumunit,6)+space(7)+str(sumtnm,10,2)+[  ]+str(sumcdw,8,2)+  ;
-      [  ]+str(sumdays,4)+[   ]+str(sumrev,10,2)+[    ]+str(sumrev/sumunit,8,2)
+ystr = space(7)+str(sumunit,6)+space(7)+str(sumtnm,11,2)+[  ]+str(sumcdw,10,2)+  ;
+      [  ]+str(sumdays,5)+[   ]+str(sumrev,11,2)+[    ]+str(sumrev/sumunit,8,2)
 @ yrow,1 say ystr
 
 mgmt_end (yrow)
